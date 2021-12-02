@@ -1,0 +1,135 @@
+#include "opencv2/opencv.hpp"
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+using namespace cv;
+
+Mat calcGrayHist(const Mat& img);
+Mat getGrayHistImage(const Mat& hist);
+
+int main(void)
+{
+	// std::cout << "Hello OpenCV " << CV_VERSION << std::endl;
+	// return 0;
+
+	//Mat img;
+	//img = imread("lena.jpg");
+
+	//if (img.empty()) {
+	//	cerr << "image load Failed! " << endl;
+	//	return -1;
+	//}
+
+	//namedWindow("image");
+	//imshow("image", img);
+
+	//waitKey();
+
+	//return 0;
+
+	////////////////////////////////////////
+
+	//Mat img;
+	//img = imread("lena.jpg" ,IMREAD_GRAYSCALE);
+
+	//if (img.empty()) {
+	//	cerr << "image load Failed! " << endl;
+	//	return -1;
+	//}
+
+	//Mat dst = img + 150;
+
+	//imshow("src", img);
+	//imshow("dst", dst);
+
+	//waitKey();
+
+	//return 0;
+
+	///////////////////////////////////////////
+
+//	Mat src;
+//	src = imread("hawkes.bmp", IMREAD_GRAYSCALE);
+//
+//	if (src.empty()) {
+//		cerr << "image load Failed! " << endl;
+//		return 0;
+//	}
+//
+////	Mat dst = imread("dark2.jpg" , IMREAD_GRAYSCALE);
+//	Mat dst;
+//	equalizeHist(src, dst);
+//
+//	imshow("src", src);
+//	imshow("srcHist", getGrayHistImage(calcGrayHist(src)));
+//
+//	imshow("dst", dst);
+//	imshow("dstHist", getGrayHistImage(calcGrayHist(dst)));
+//
+//	waitKey();
+//
+//	return 0;
+
+	Mat src;
+	src = imread("lena.jpg", IMREAD_GRAYSCALE);
+
+	if (src.empty()) {
+		cerr << "image load Failed! " << endl;
+		return 0;
+	}
+
+	//	Mat dst = imread("dark2.jpg" , IMREAD_GRAYSCALE);
+	Mat dx, dy;
+	
+	Sobel(src, dx, CV_32FC1, 1, 0);
+	Sobel(src, dy, CV_32FC1, 0, 1);
+
+	Mat fmag, mag;
+	magnitude(dx, dy, fmag);
+	fmag.convertTo(mag, CV_8UC1);
+
+	Mat dst = mag > 150;
+
+	imshow("src", src);
+	imshow("mag", mag);
+	imshow("dst", dst);
+
+	waitKey();
+
+	return 0;
+
+}
+
+Mat calcGrayHist(const Mat& img)
+{
+	CV_Assert(img.type() == CV_8UC1);
+
+	/* calc histogram */
+	Mat hist;
+	int channels[] = { 0 };
+	int dims = 1;
+	const int histSize[] = { 256 };
+	float graylevel[] = { 0, 255 };
+	const float* ranges[] = { graylevel };
+	calcHist(&img, 1, channels, noArray(), hist, dims, histSize, ranges);
+	return hist;
+
+}
+
+Mat getGrayHistImage(const Mat& hist)
+{
+	CV_Assert(hist.type() == CV_32FC1);
+	CV_Assert(hist.size() == Size(1, 256));
+
+	/* draw histogram */
+	double histMax;
+	minMaxLoc(hist, 0, &histMax); // 계산된 hist 행렬에서 최대값을 histMax 에 저장
+
+	Mat imgHist(100, 256, CV_8UC1, Scalar(255)); // 흰색으로 초기화한 256x100 크기의 영상 생성
+	for (int i = 0; i < 256; i++) {
+		line(imgHist, Point(i, 100),
+			Point(i, 100 - cvRound(hist.at<float>(i, 0) * 100 / histMax)), Scalar(0));
+	}
+
+	return imgHist;
+}
